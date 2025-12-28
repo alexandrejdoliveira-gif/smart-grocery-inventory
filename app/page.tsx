@@ -109,7 +109,7 @@ export default function HomePage() {
                         Join thousands of smart shoppers already saving on groceries
                     </p>
                     <button className="bg-white text-blue-600 px-8 py-4 rounded-full font-semibold text-lg hover:bg-gray-100 transition-colors shadow-lg">
-                        Get Started - It's Free
+                        Get Started - It&apos;s Free
                     </button>
                 </div>
 
