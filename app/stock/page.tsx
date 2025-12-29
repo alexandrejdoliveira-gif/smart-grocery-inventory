@@ -61,7 +61,7 @@ export default function StockPage() {
                 <div className="container mx-auto px-6 py-4">
                     <div className="flex items-center justify-between">
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">SmartStock</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">SmartPantry</h1>
                             <p className="text-xs text-gray-500 uppercase tracking-wider">Inventory Intel</p>
                         </div>
                         <div className="flex items-center gap-2">

@@ -101,7 +101,7 @@ export default function RebuyPage() {
                     <div className="flex items-center justify-between">
                         <Link href="/">
                             <div className="cursor-pointer">
-                                <h1 className="text-2xl font-bold tracking-tight">SmartStock</h1>
+                                <h1 className="text-2xl font-bold tracking-tight">SmartPantry</h1>
                                 <p className="text-xs text-gray-500 uppercase tracking-wider">Inventory Intel</p>
                             </div>
                         </Link>
