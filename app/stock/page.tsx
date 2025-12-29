@@ -83,9 +83,9 @@ export default function StockPage() {
                         <Link href="/rebuy" className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
                             🛒 Rebuy
                         </Link>
-                        <button className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                        <Link href="/markets" className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
                             🏪 Markets
-                        </button>
+                        </Link>
                         <button className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
                             ⚙️ Gear
                         </button>

@@ -127,9 +127,9 @@ export default function RebuyPage() {
                                 <span className="ml-2 px-2 py-0.5 bg-blue-600 text-xs rounded-full">{items.length}</span>
                             )}
                         </button>
-                        <button className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                        <Link href="/markets" className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
                             🏪 Markets
-                        </button>
+                        </Link>
                         <button className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
                             ⚙️ Gear
                         </button>
@@ -170,8 +170,8 @@ export default function RebuyPage() {
                         <button
                             onClick={() => setFilter('all')}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === 'all'
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             All ({items.length})
@@ -179,8 +179,8 @@ export default function RebuyPage() {
                         <button
                             onClick={() => setFilter('cheaper')}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === 'cheaper'
-                                    ? 'bg-green-600 text-white'
-                                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                                ? 'bg-green-600 text-white'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             🟢 Cheaper ({items.filter(i => i.status === 'cheaper').length})
@@ -188,8 +188,8 @@ export default function RebuyPage() {
                         <button
                             onClick={() => setFilter('expensive')}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === 'expensive'
-                                    ? 'bg-red-600 text-white'
-                                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                                ? 'bg-red-600 text-white'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             🔴 More Expensive ({items.filter(i => i.status === 'expensive').length})
@@ -197,8 +197,8 @@ export default function RebuyPage() {
                         <button
                             onClick={() => setFilter('stable')}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${filter === 'stable'
-                                    ? 'bg-yellow-600 text-white'
-                                    : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
+                                ? 'bg-yellow-600 text-white'
+                                : 'bg-white/5 text-gray-400 hover:bg-white/10 hover:text-white'
                                 }`}
                         >
                             🟡 Stable ({items.filter(i => i.status === 'stable').length})
