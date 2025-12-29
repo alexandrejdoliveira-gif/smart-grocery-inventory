@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 
 // Mock data - será substituído por dados reais depois
 const mockProducts = [
@@ -79,9 +80,9 @@ export default function StockPage() {
                         <button className="py-4 text-sm font-medium text-white border-b-2 border-blue-500">
                             📦 Stock
                         </button>
-                        <button className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
+                        <Link href="/rebuy" className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
                             🛒 Rebuy
-                        </button>
+                        </Link>
                         <button className="py-4 text-sm font-medium text-gray-400 hover:text-white transition-colors">
                             🏪 Markets
                         </button>
