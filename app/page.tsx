@@ -15,9 +15,9 @@ export default function HomePage() {
                             <button className="px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors">
                                 Sign In
                             </button>
-                            <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-full transition-all hover:scale-105">
+                            <Link href="/stock" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-full transition-all hover:scale-105">
                                 Get Started
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
@@ -46,10 +46,10 @@ export default function HomePage() {
                         </p>
 
                         <div className="flex items-center justify-center gap-4">
-                            <button className="group px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-full transition-all hover:scale-105 hover:shadow-lg hover:shadow-blue-600/50">
+                            <Link href="/stock" className="group px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-full transition-all hover:scale-105 hover:shadow-lg hover:shadow-blue-600/50">
                                 Start Saving Now
                                 <span className="inline-block ml-2 group-hover:translate-x-1 transition-transform">→</span>
-                            </button>
+                            </Link>
                             <button className="px-8 py-4 bg-white/5 hover:bg-white/10 text-white font-semibold rounded-full border border-white/10 transition-all">
                                 Watch Demo
                             </button>
