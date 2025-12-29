@@ -7,9 +7,13 @@ import { useRouter } from 'next/navigation'
 type ScanStep = 'upload' | 'processing' | 'review'
 
 // Mock extracted data from receipt
+// In production, this data would be automatically extracted by OCR/AI:
+// - Store name: extracted from receipt header
+// - Date: extracted from receipt timestamp
+// - Items: extracted line by line with prices
 const mockExtractedData = {
-    store: 'Costco',
-    date: '2024-12-29',
+    store: 'Costco',  // Auto-extracted from receipt
+    date: '2024-12-29',  // Auto-extracted from receipt
     total: 45.67,
     items: [
         { name: 'Organic Bananas', price: 3.99, quantity: 1 },
