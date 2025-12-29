@@ -191,9 +191,9 @@ export default function HomePage() {
                             <p className="text-lg text-blue-100 mb-8 max-w-2xl mx-auto">
                                 Join thousands of smart shoppers already saving on groceries with AI-powered price intelligence
                             </p>
-                            <button className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-full hover:bg-gray-100 transition-all hover:scale-105 hover:shadow-2xl">
+                            <Link href="/stock" className="px-8 py-4 bg-white text-blue-600 font-semibold rounded-full hover:bg-gray-100 transition-all hover:scale-105 hover:shadow-2xl">
                                 Get Started - It&apos;s Free
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
