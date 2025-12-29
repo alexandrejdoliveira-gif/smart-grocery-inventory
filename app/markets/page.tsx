@@ -89,7 +89,7 @@ export default function MarketsPage() {
                             </div>
                         </Link>
                         <div className="flex items-center gap-2">
-                            <Link href="/stock" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-full transition-all hover:scale-105">
+                            <Link href="/scan" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-full transition-all hover:scale-105">
                                 Quick Scan
                             </Link>
                         </div>

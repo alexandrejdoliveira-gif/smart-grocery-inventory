@@ -65,9 +65,9 @@ export default function StockPage() {
                             <p className="text-xs text-gray-500 uppercase tracking-wider">Inventory Intel</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <button className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-full transition-all hover:scale-105">
+                            <Link href="/scan" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white text-sm font-semibold rounded-full transition-all hover:scale-105">
                                 Quick Scan
-                            </button>
+                            </Link>
                         </div>
                     </div>
                 </div>
