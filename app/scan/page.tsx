@@ -4,7 +4,26 @@ import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-type ScanStep = 'upload' | 'processing' | 'review'
+type ScanStep = 'upload' | 'processing' | 'review' | 'duplicate'
+
+// Mock database of previously scanned receipts
+// In production, this would come from the database
+const mockScannedReceipts = [
+    {
+        id: '1',
+        store: 'Costco',
+        date: '2024-12-29',
+        total: 45.67,
+        scannedAt: '2024-12-29T10:30:00'
+    },
+    {
+        id: '2',
+        store: 'Walmart',
+        date: '2024-12-28',
+        total: 32.15,
+        scannedAt: '2024-12-28T15:45:00'
+    }
+]
 
 // Mock extracted data from receipt
 // In production, this data would be automatically extracted by OCR/AI:
@@ -31,6 +50,18 @@ export default function ScanPage() {
     const [uploadedImage, setUploadedImage] = useState<string | null>(null)
     const [extractedData, setExtractedData] = useState(mockExtractedData)
     const [processingProgress, setProcessingProgress] = useState(0)
+    const [duplicateReceipt, setDuplicateReceipt] = useState<typeof mockScannedReceipts[0] | null>(null)
+
+    // Check for duplicate receipt
+    const checkDuplicate = (data: typeof mockExtractedData) => {
+        const duplicate = mockScannedReceipts.find(
+            receipt =>
+                receipt.store === data.store &&
+                receipt.date === data.date &&
+                Math.abs(receipt.total - data.total) < 0.01 // Allow for small rounding differences
+        )
+        return duplicate || null
+    }
 
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0]
@@ -53,7 +84,16 @@ export default function ScanPage() {
             setProcessingProgress((prev) => {
                 if (prev >= 100) {
                     clearInterval(interval)
-                    setTimeout(() => setStep('review'), 500)
+                    setTimeout(() => {
+                        // Check for duplicate after processing
+                        const duplicate = checkDuplicate(mockExtractedData)
+                        if (duplicate) {
+                            setDuplicateReceipt(duplicate)
+                            setStep('duplicate')
+                        } else {
+                            setStep('review')
+                        }
+                    }, 500)
                     return 100
                 }
                 return prev + 10
@@ -64,6 +104,11 @@ export default function ScanPage() {
     const handleSaveToInventory = () => {
         // In real app, this would save to database
         router.push('/stock')
+    }
+
+    const handleProceedAnyway = () => {
+        // User acknowledges duplicate but wants to proceed
+        setStep('review')
     }
 
     const handleItemEdit = (index: number, field: string, value: string | number) => {
@@ -196,6 +241,89 @@ export default function ScanPage() {
                                         <span className="text-sm">Detecting duplicates...</span>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Duplicate Detection Step */}
+                    {step === 'duplicate' && duplicateReceipt && (
+                        <div className="py-20 animate-fade-in">
+                            <div className="text-center mb-8">
+                                <div className="w-24 h-24 bg-yellow-600/20 rounded-full flex items-center justify-center mx-auto mb-6">
+                                    <span className="text-6xl">⚠️</span>
+                                </div>
+                                <h2 className="text-3xl font-bold mb-3 text-yellow-400">Duplicate Receipt Detected</h2>
+                                <p className="text-gray-400 text-lg">
+                                    This receipt appears to have been scanned before
+                                </p>
+                            </div>
+
+                            {/* Duplicate Details */}
+                            <div className="max-w-md mx-auto mb-8 p-6 bg-yellow-600/10 border border-yellow-500/30 rounded-2xl">
+                                <h3 className="text-lg font-semibold mb-4 text-yellow-400">
+                                    Previously Scanned Receipt
+                                </h3>
+                                <div className="space-y-3 text-sm">
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-400">Store:</span>
+                                        <span className="font-medium">{duplicateReceipt.store}</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-400">Date:</span>
+                                        <span className="font-medium">
+                                            {new Date(duplicateReceipt.date).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric',
+                                                year: 'numeric'
+                                            })}
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                        <span className="text-gray-400">Total:</span>
+                                        <span className="font-medium">${duplicateReceipt.total.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between pt-3 border-t border-yellow-500/30">
+                                        <span className="text-gray-400">Scanned:</span>
+                                        <span className="font-medium">
+                                            {new Date(duplicateReceipt.scannedAt).toLocaleDateString('en-US', {
+                                                month: 'short',
+                                                day: 'numeric'
+                                            })} at {new Date(duplicateReceipt.scannedAt).toLocaleTimeString('en-US', {
+                                                hour: 'numeric',
+                                                minute: '2-digit'
+                                            })}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Warning Message */}
+                            <div className="max-w-md mx-auto mb-8 p-4 bg-white/5 border border-white/10 rounded-xl">
+                                <p className="text-sm text-gray-300 text-center">
+                                    💡 Scanning the same receipt twice will create duplicate entries in your inventory.
+                                </p>
+                            </div>
+
+                            {/* Actions */}
+                            <div className="max-w-md mx-auto flex flex-col gap-3">
+                                <button
+                                    onClick={() => setStep('upload')}
+                                    className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-semibold transition-all hover:scale-105"
+                                >
+                                    Scan Different Receipt
+                                </button>
+                                <button
+                                    onClick={handleProceedAnyway}
+                                    className="w-full px-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full font-semibold transition-all"
+                                >
+                                    Proceed Anyway
+                                </button>
+                                <Link
+                                    href="/stock"
+                                    className="w-full px-8 py-4 text-center text-gray-400 hover:text-white text-sm transition-colors"
+                                >
+                                    Cancel
+                                </Link>
                             </div>
                         </div>
                     )}
