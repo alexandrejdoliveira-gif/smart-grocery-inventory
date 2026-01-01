@@ -3,8 +3,9 @@
 import { useState, useRef } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { calculateConfidence, getConfidenceBadge as getBadge, needsConfirmation, shouldAutoApprove } from '@/lib/confidence'
 
-type ScanStep = 'upload' | 'processing' | 'review' | 'duplicate'
+type ScanStep = 'upload' | 'processing' | 'review' | 'duplicate' | 'confirm'
 
 // Mock database of previously scanned receipts
 // In production, this would come from the database
@@ -25,6 +26,37 @@ const mockScannedReceipts = [
     }
 ]
 
+// Mock purchase history for confidence calculation
+const mockPurchaseHistory = [
+    {
+        id: 'h1',
+        name: 'Organic Bananas',
+        store: 'Costco',
+        date: '2024-12-15',
+        price: 3.89,
+        quantity: 1,
+        purchases: 5
+    },
+    {
+        id: 'h2',
+        name: 'Whole Milk 1 Gallon',
+        store: 'Costco',
+        date: '2024-12-20',
+        price: 4.19,
+        quantity: 2,
+        purchases: 8
+    },
+    {
+        id: 'h3',
+        name: 'Bread Whole Wheat',
+        store: 'Walmart',
+        date: '2024-12-10',
+        price: 2.89,
+        quantity: 1,
+        purchases: 3
+    }
+]
+
 // Mock extracted data from receipt
 // In production, this data would be automatically extracted by OCR/AI:
 // - Store name: extracted from receipt header
@@ -35,11 +67,11 @@ const mockExtractedData = {
     date: '2024-12-29',  // Auto-extracted from receipt
     total: 45.67,
     items: [
-        { name: 'Organic Bananas', price: 3.99, quantity: 1 },
-        { name: 'Whole Milk 1 Gallon', price: 4.29, quantity: 2 },
-        { name: 'Bread Whole Wheat', price: 2.99, quantity: 1 },
-        { name: 'Chicken Breast 2lb', price: 12.99, quantity: 1 },
-        { name: 'Eggs Large 12ct', price: 5.49, quantity: 1 },
+        { name: 'Organic Bananas', price: 3.99, quantity: 1, confidence: 0 },
+        { name: 'Whole Milk 1 Gallon', price: 4.29, quantity: 2, confidence: 0 },
+        { name: 'Bread Whole Wheat', price: 2.99, quantity: 1, confidence: 0 },
+        { name: 'Chicken Breast 2lb', price: 12.99, quantity: 1, confidence: 0 },
+        { name: 'Eggs Large 12ct', price: 5.49, quantity: 1, confidence: 0 },
     ]
 }
 
@@ -51,6 +83,7 @@ export default function ScanPage() {
     const [extractedData, setExtractedData] = useState(mockExtractedData)
     const [processingProgress, setProcessingProgress] = useState(0)
     const [duplicateReceipt, setDuplicateReceipt] = useState<typeof mockScannedReceipts[0] | null>(null)
+    const [itemsNeedingConfirmation, setItemsNeedingConfirmation] = useState<typeof mockExtractedData.items>([])
 
     // Check for duplicate receipt
     const checkDuplicate = (data: typeof mockExtractedData) => {
@@ -61,6 +94,32 @@ export default function ScanPage() {
                 Math.abs(receipt.total - data.total) < 0.01 // Allow for small rounding differences
         )
         return duplicate || null
+    }
+
+    // Calculate confidence for all items
+    const calculateItemsConfidence = (items: typeof mockExtractedData.items) => {
+        return items.map(item => {
+            // Find relevant history for this item
+            const history = mockPurchaseHistory.filter(h =>
+                h.name.toLowerCase().includes(item.name.toLowerCase().split(' ')[0]) ||
+                item.name.toLowerCase().includes(h.name.toLowerCase().split(' ')[0])
+            )
+
+            const confidence = calculateConfidence(
+                {
+                    id: '',
+                    name: item.name,
+                    store: extractedData.store,
+                    date: extractedData.date,
+                    price: item.price,
+                    quantity: item.quantity
+                },
+                history,
+                { type: 'validated_receipt' }
+            )
+
+            return { ...item, confidence }
+        })
     }
 
     const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -85,11 +144,24 @@ export default function ScanPage() {
                 if (prev >= 100) {
                     clearInterval(interval)
                     setTimeout(() => {
+                        // Calculate confidence for all items
+                        const itemsWithConfidence = calculateItemsConfidence(mockExtractedData.items)
+                        setExtractedData({ ...mockExtractedData, items: itemsWithConfidence })
+
                         // Check for duplicate after processing
                         const duplicate = checkDuplicate(mockExtractedData)
                         if (duplicate) {
                             setDuplicateReceipt(duplicate)
                             setStep('duplicate')
+                            return
+                        }
+
+                        // Check if any items need confirmation
+                        const needConfirm = itemsWithConfidence.filter(item => needsConfirmation(item.confidence))
+
+                        if (needConfirm.length > 0) {
+                            setItemsNeedingConfirmation(needConfirm)
+                            setStep('confirm')
                         } else {
                             setStep('review')
                         }
@@ -325,6 +397,107 @@ export default function ScanPage() {
                                     Cancel
                                 </Link>
                             </div>
+                        </div>
+                    )}
+
+                    {/* Confirm & Learn Step */}
+                    {step === 'confirm' && itemsNeedingConfirmation.length > 0 && (
+                        <div className="py-12 animate-fade-in">
+                            <div className="text-center mb-8">
+                                <div className="w-20 h-20 bg-yellow-600/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <span className="text-4xl">🧠</span>
+                                </div>
+                                <h2 className="text-3xl font-bold mb-2">Confirm & Learn</h2>
+                                <p className="text-gray-400">
+                                    Help me learn by confirming these items
+                                </p>
+                            </div>
+
+                            {/* Info Box */}
+                            <div className="max-w-2xl mx-auto mb-8 p-4 bg-blue-600/10 border border-blue-500/30 rounded-xl">
+                                <p className="text-sm text-blue-300 text-center">
+                                    💡 These items have <strong>medium/low confidence</strong>. Your confirmation helps improve accuracy over time.
+                                </p>
+                            </div>
+
+                            {/* Items Needing Confirmation */}
+                            <div className="max-w-2xl mx-auto space-y-4 mb-8">
+                                {itemsNeedingConfirmation.map((item, index) => {
+                                    const badge = getBadge(item.confidence)
+                                    const badgeStyles = {
+                                        HIGH: 'bg-green-600/20 text-green-400 border-green-500/30',
+                                        MEDIUM: 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30',
+                                        LOW: 'bg-red-600/20 text-red-400 border-red-500/30'
+                                    }
+
+                                    return (
+                                        <div key={index} className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                                            <div className="flex items-start justify-between mb-4">
+                                                <div className="flex-1">
+                                                    <div className="flex items-center gap-2 mb-2">
+                                                        <h3 className="text-lg font-semibold">{item.name}</h3>
+                                                        {badge && (
+                                                            <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${badgeStyles[badge.type]}`}>
+                                                                {badge.icon} {badge.label}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="flex items-center gap-4 text-sm text-gray-400">
+                                                        <span>Qty: {item.quantity}</span>
+                                                        <span>•</span>
+                                                        <span>${item.price.toFixed(2)}</span>
+                                                        <span>•</span>
+                                                        <span className="text-blue-400">{Math.round(item.confidence * 100)}% confidence</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Confirmation Actions */}
+                                            <div className="flex gap-3">
+                                                <button
+                                                    onClick={() => {
+                                                        // Remove from confirmation list (confirmed)
+                                                        setItemsNeedingConfirmation(prev => prev.filter((_, i) => i !== index))
+                                                        // Boost confidence
+                                                        const updatedItems = extractedData.items.map(i =>
+                                                            i.name === item.name ? { ...i, confidence: Math.min(1, i.confidence + 0.15) } : i
+                                                        )
+                                                        setExtractedData({ ...extractedData, items: updatedItems })
+                                                    }}
+                                                    className="flex-1 px-6 py-3 bg-green-600 hover:bg-green-500 text-white rounded-full font-semibold transition-all hover:scale-105"
+                                                >
+                                                    ✓ Confirm
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        // Remove from both lists (rejected)
+                                                        setItemsNeedingConfirmation(prev => prev.filter((_, i) => i !== index))
+                                                        setExtractedData({
+                                                            ...extractedData,
+                                                            items: extractedData.items.filter(i => i.name !== item.name)
+                                                        })
+                                                    }}
+                                                    className="flex-1 px-6 py-3 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-400 hover:text-red-300 rounded-full font-semibold transition-all"
+                                                >
+                                                    ✕ Reject
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+
+                            {/* Continue Button */}
+                            {itemsNeedingConfirmation.length === 0 && (
+                                <div className="max-w-md mx-auto">
+                                    <button
+                                        onClick={() => setStep('review')}
+                                        className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-semibold transition-all hover:scale-105"
+                                    >
+                                        Continue to Review
+                                    </button>
+                                </div>
+                            )}
                         </div>
                     )}
 
