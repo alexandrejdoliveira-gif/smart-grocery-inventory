@@ -37,10 +37,38 @@ const mockProducts = [
 export default function StockPage() {
     const [products, setProducts] = useState(mockProducts)
     const [searchQuery, setSearchQuery] = useState('')
+    const [selectedProduct, setSelectedProduct] = useState<typeof mockProducts[0] | null>(null)
+    const [isModalOpen, setIsModalOpen] = useState(false)
 
     const filteredProducts = products.filter(product =>
         product.name.toLowerCase().includes(searchQuery.toLowerCase())
     )
+
+    const handleOpenModal = (product: typeof mockProducts[0]) => {
+        setSelectedProduct(product)
+        setIsModalOpen(true)
+    }
+
+    const handleCloseModal = () => {
+        setIsModalOpen(false)
+        setSelectedProduct(null)
+    }
+
+    const handleUpdateProduct = () => {
+        if (selectedProduct) {
+            setProducts(products.map(p =>
+                p.id === selectedProduct.id ? selectedProduct : p
+            ))
+            handleCloseModal()
+        }
+    }
+
+    const handleDeleteProduct = () => {
+        if (selectedProduct) {
+            setProducts(products.filter(p => p.id !== selectedProduct.id))
+            handleCloseModal()
+        }
+    }
 
     const handleMarkAsFinished = (productId: string) => {
         setProducts(products.filter(p => p.id !== productId))
@@ -135,7 +163,8 @@ export default function StockPage() {
                         {filteredProducts.map((product) => (
                             <div
                                 key={product.id}
-                                className="group p-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all"
+                                onClick={() => handleOpenModal(product)}
+                                className="group p-6 bg-white/5 hover:bg-white/10 border border-white/10 rounded-2xl transition-all cursor-pointer"
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex-1">
@@ -151,7 +180,7 @@ export default function StockPage() {
 
                                 <div className="flex items-center justify-between">
                                     {/* Quantity Controls */}
-                                    <div className="flex items-center gap-3 bg-white/5 rounded-full px-4 py-2">
+                                    <div className="flex items-center gap-3 bg-white/5 rounded-full px-4 py-2" onClick={(e) => e.stopPropagation()}>
                                         <button
                                             onClick={() => handleQuantityChange(product.id, -1)}
                                             className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
@@ -171,7 +200,10 @@ export default function StockPage() {
 
                                     {/* Finished Button */}
                                     <button
-                                        onClick={() => handleMarkAsFinished(product.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            handleMarkAsFinished(product.id)
+                                        }}
                                         className="px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-full text-sm font-medium text-gray-300 hover:text-white transition-all"
                                     >
                                         FINISHED
@@ -183,10 +215,98 @@ export default function StockPage() {
                 </div>
             </div>
 
+            {/* Review Modal */}
+            {isModalOpen && selectedProduct && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-black/80 backdrop-blur-sm animate-fade-in">
+                    <div className="w-full max-w-md bg-gradient-to-br from-gray-900 to-black border border-white/10 rounded-3xl p-8 shadow-2xl animate-scale-in">
+                        {/* Header */}
+                        <div className="flex items-center justify-between mb-6">
+                            <h2 className="text-2xl font-bold">REVIEW ITEM</h2>
+                            <button
+                                onClick={handleCloseModal}
+                                className="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition-all"
+                            >
+                                ✕
+                            </button>
+                        </div>
+
+                        {/* Item Name */}
+                        <div className="mb-6">
+                            <label className="text-xs text-gray-500 uppercase tracking-wider block mb-2">
+                                Item Name
+                            </label>
+                            <input
+                                type="text"
+                                value={selectedProduct.name}
+                                onChange={(e) => setSelectedProduct({ ...selectedProduct, name: e.target.value })}
+                                className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white focus:outline-none focus:border-blue-500/50 transition-all"
+                            />
+                        </div>
+
+                        {/* Quantity and Price */}
+                        <div className="grid grid-cols-2 gap-4 mb-8">
+                            {/* Quantity */}
+                            <div>
+                                <label className="text-xs text-gray-500 uppercase tracking-wider block mb-2">
+                                    Quantity
+                                </label>
+                                <div className="flex items-center gap-3 bg-black/50 border border-white/10 rounded-xl px-4 py-3">
+                                    <button
+                                        onClick={() => setSelectedProduct({ ...selectedProduct, quantity: Math.max(1, selectedProduct.quantity - 1) })}
+                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                                    >
+                                        −
+                                    </button>
+                                    <span className="text-2xl font-bold flex-1 text-center">
+                                        {selectedProduct.quantity}
+                                    </span>
+                                    <button
+                                        onClick={() => setSelectedProduct({ ...selectedProduct, quantity: selectedProduct.quantity + 1 })}
+                                        className="w-8 h-8 flex items-center justify-center text-gray-400 hover:text-white transition-colors"
+                                    >
+                                        +
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Price */}
+                            <div>
+                                <label className="text-xs text-gray-500 uppercase tracking-wider block mb-2">
+                                    Price ($)
+                                </label>
+                                <input
+                                    type="number"
+                                    step="0.01"
+                                    value={selectedProduct.price}
+                                    onChange={(e) => setSelectedProduct({ ...selectedProduct, price: parseFloat(e.target.value) || 0 })}
+                                    className="w-full px-4 py-3 bg-black/50 border border-white/10 rounded-xl text-white text-2xl font-bold text-center focus:outline-none focus:border-blue-500/50 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="space-y-3">
+                            <button
+                                onClick={handleUpdateProduct}
+                                className="w-full px-8 py-4 bg-blue-600 hover:bg-blue-500 text-white rounded-full font-semibold transition-all hover:scale-105"
+                            >
+                                CONFIRM & LEARN
+                            </button>
+                            <button
+                                onClick={handleDeleteProduct}
+                                className="w-full px-8 py-4 bg-red-600/20 hover:bg-red-600/30 border border-red-500/30 text-red-400 hover:text-red-300 rounded-full font-semibold transition-all"
+                            >
+                                DELETE ITEM
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Floating Action Button */}
-            <button className="fixed bottom-8 right-8 w-16 h-16 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl shadow-blue-600/50 flex items-center justify-center transition-all hover:scale-110 group">
+            <Link href="/scan" className="fixed bottom-8 right-8 w-16 h-16 bg-blue-600 hover:bg-blue-500 text-white rounded-full shadow-2xl shadow-blue-600/50 flex items-center justify-center transition-all hover:scale-110 group">
                 <span className="text-2xl group-hover:scale-110 transition-transform">📸</span>
-            </button>
+            </Link>
         </main>
     )
 }
