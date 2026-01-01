@@ -12,7 +12,8 @@ const mockProducts = [
         date: 'Dec 15',
         price: 10.79,
         quantity: 1,
-        status: 'available'
+        status: 'available',
+        confidence: 0.92 // HIGH - strong historical match
     },
     {
         id: '2',
@@ -21,7 +22,8 @@ const mockProducts = [
         date: 'Dec 15',
         price: 9.99,
         quantity: 1,
-        status: 'available'
+        status: 'available',
+        confidence: 0.68 // MEDIUM - needs confirmation
     },
     {
         id: '3',
@@ -30,9 +32,26 @@ const mockProducts = [
         date: 'Dec 15',
         price: 12.99,
         quantity: 2,
-        status: 'available'
+        status: 'available',
+        confidence: 0.45 // LOW - review needed
     },
 ]
+
+// Confidence badge helper
+type BadgeType = 'HIGH' | 'MEDIUM' | 'LOW' | null
+
+function getConfidenceBadge(confidence: number): { type: BadgeType; label: string; icon: string } | null {
+    if (confidence >= 0.85) {
+        return { type: 'HIGH', label: 'HIGH', icon: '✓' }
+    }
+    if (confidence >= 0.60) {
+        return { type: 'MEDIUM', label: 'MEDIUM', icon: '⚠' }
+    }
+    if (confidence >= 0.40) {
+        return { type: 'LOW', label: 'REVIEW NEEDED', icon: '⚠' }
+    }
+    return null
+}
 
 export default function StockPage() {
     const [products, setProducts] = useState(mockProducts)
@@ -168,7 +187,25 @@ export default function StockPage() {
                             >
                                 <div className="flex items-start justify-between mb-4">
                                     <div className="flex-1">
-                                        <h3 className="text-lg font-semibold mb-1">{product.name}</h3>
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <h3 className="text-lg font-semibold">{product.name}</h3>
+                                            {(() => {
+                                                const badge = getConfidenceBadge(product.confidence)
+                                                if (!badge) return null
+
+                                                const badgeStyles = {
+                                                    HIGH: 'bg-green-600/20 text-green-400 border-green-500/30',
+                                                    MEDIUM: 'bg-yellow-600/20 text-yellow-400 border-yellow-500/30',
+                                                    LOW: 'bg-red-600/20 text-red-400 border-red-500/30'
+                                                }
+
+                                                return (
+                                                    <span className={`px-2 py-0.5 rounded-full text-xs font-semibold border ${badgeStyles[badge.type!]}`}>
+                                                        {badge.icon} {badge.label}
+                                                    </span>
+                                                )
+                                            })()}
+                                        </div>
                                         <p className="text-sm text-gray-400">
                                             {product.store} • {product.date}
                                         </p>
